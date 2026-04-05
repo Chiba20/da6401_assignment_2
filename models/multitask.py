@@ -43,21 +43,21 @@ class MultiTaskPerceptionModel(nn.Module):
         # download required checkpoints from Google Drive
         if not os.path.exists(classifier_path):
             gdown.download(
-                "https://drive.google.com/uc?id=1uklRkhOAQy6R0qOAgCMdfmmdvYm5LwB8",
+                "1uklRkhOAQy6R0qOAgCMdfmmdvYm5LwB8",
                 classifier_path,
                 quiet=False,
             )
 
         if not os.path.exists(localizer_path):
             gdown.download(
-                "https://drive.google.com/uc?id=17aI4hlRVe26vIdaOKfl8RxtNdxpMZTxZ",
+                "17aI4hlRVe26vIdaOKfl8RxtNdxpMZTxZ",
                 localizer_path,
                 quiet=False,
             )
 
         if not os.path.exists(unet_path):
             gdown.download(
-                "https://drive.google.com/uc?id=1M-qy4231U_XXUbBpQvfKL2Y1FFvtL0eP",
+                "1M-qy4231U_XXUbBpQvfKL2Y1FFvtL0eP",
                 unet_path,
                 quiet=False,
             )
