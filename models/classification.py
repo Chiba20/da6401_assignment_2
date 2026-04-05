@@ -1,8 +1,10 @@
-"""Classification components
-"""
+"""Classification components"""
 
 import torch
 import torch.nn as nn
+
+from models.vgg11 import VGG11Encoder
+from models.layers import CustomDropout
 
 
 class VGG11Classifier(nn.Module):
@@ -16,7 +18,26 @@ class VGG11Classifier(nn.Module):
             in_channels: Number of input channels.
             dropout_p: Dropout probability for the classifier head.
         """
-        pass
+        super().__init__()
+
+        self.encoder = VGG11Encoder(in_channels=in_channels)
+
+        self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
+
+        self.classifier = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(512 * 7 * 7, 4096),
+            nn.BatchNorm1d(4096),
+            nn.ReLU(inplace=True),
+            CustomDropout(p=dropout_p),
+
+            nn.Linear(4096, 4096),
+            nn.BatchNorm1d(4096),
+            nn.ReLU(inplace=True),
+            CustomDropout(p=dropout_p),
+
+            nn.Linear(4096, num_classes),
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass for classification model.
@@ -25,5 +46,7 @@ class VGG11Classifier(nn.Module):
         Returns:
             Classification logits [B, num_classes].
         """
-        # TODO: Implement forward pass.
-        raise NotImplementedError("Implement VGG11Classifier.forward")
+        x = self.encoder(x)
+        x = self.avgpool(x)
+        x = self.classifier(x)
+        return x
