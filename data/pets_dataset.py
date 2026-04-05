@@ -15,7 +15,7 @@ class OxfordIIITPetDataset(Dataset):
     Returns:
         image: Tensor of shape [3, H, W]
         label: Tensor scalar in [0, 36]
-        bbox: Tensor of shape [4] as [x_center, y_center, width, height] normalized to [0, 1]
+        bbox: Tensor of shape [4] as [x_center, y_center, width, height] in pixel space
         mask: Tensor of shape [H, W] with classes:
               0 = pet, 1 = border, 2 = background
     """
@@ -71,10 +71,19 @@ class OxfordIIITPetDataset(Dataset):
         xmax = float(bbox.find("xmax").text)
         ymax = float(bbox.find("ymax").text)
 
-        x_center = ((xmin + xmax) / 2.0) / orig_w
-        y_center = ((ymin + ymax) / 2.0) / orig_h
-        width = (xmax - xmin) / orig_w
-        height = (ymax - ymin) / orig_h
+        x_center = (xmin + xmax) / 2.0
+        y_center = (ymin + ymax) / 2.0
+        width = (xmax - xmin)
+        height = (ymax - ymin)
+
+        # scale to resized image (224x224)
+        scale_x = self.image_size / orig_w
+        scale_y = self.image_size / orig_h
+        
+        x_center *= scale_x
+        y_center *= scale_y
+        width *= scale_x
+        height *= scale_y
 
         return torch.tensor([x_center, y_center, width, height], dtype=torch.float32)
 
