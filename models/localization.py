@@ -35,8 +35,7 @@ class VGG11Localizer(nn.Module):
             nn.ReLU(inplace=True),
             CustomDropout(p=dropout_p),
 
-            nn.Linear(1024, 4),
-            nn.Sigmoid()
+            nn.Linear(1024, 4)
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
