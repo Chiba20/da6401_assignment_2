@@ -45,7 +45,7 @@ class MultiTaskPerceptionModel(nn.Module):
 
         if not os.path.exists(classifier_path):
             gdown.download(
-                url="https://drive.google.com/uc?id=1uklRkhOAQy6R0qOAgCMdfmmdvYm5LwB8",
+                url="https://drive.google.com/file/d/1PgAwJ3L_gVwxFPUuvB3IxfJhFUS0RB1I/view?usp=sharing",
                 output=classifier_path,
                 quiet=False,
                 fuzzy=True,
@@ -53,7 +53,7 @@ class MultiTaskPerceptionModel(nn.Module):
 
         if not os.path.exists(localizer_path):
             gdown.download(
-                url="https://drive.google.com/uc?id=17aI4hlRVe26vIdaOKfl8RxtNdxpMZTxZ",
+                url="https://drive.google.com/file/d/1ss_cuZhLmgb1OiUMirw160Tse2qZumVo/view?usp=sharing",
                 output=localizer_path,
                 quiet=False,
                 fuzzy=True,
@@ -61,7 +61,7 @@ class MultiTaskPerceptionModel(nn.Module):
 
         if not os.path.exists(unet_path):
             gdown.download(
-                url="https://drive.google.com/uc?id=1M-qy4231U_XXUbBpQvfKL2Y1FFvtL0eP",
+                url="https://drive.google.com/file/d/1M-qy4231U_XXUbBpQvfKL2Y1FFvtL0eP/view?usp=sharing",
                 output=unet_path,
                 quiet=False,
                 fuzzy=True,
