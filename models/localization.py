@@ -45,7 +45,7 @@ class VGG11Localizer(nn.Module):
             x: Input tensor of shape [B, in_channels, H, W].
 
         Returns:
-            Bounding box coordinates [B, 4] in normalized
+            Bounding box coordinates [B, 4] in pixel-space
             (x_center, y_center, width, height) format.
         """
         x = self.encoder(x)
