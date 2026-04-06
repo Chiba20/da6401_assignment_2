@@ -37,21 +37,23 @@ class OxfordIIITPetDataset(Dataset):
         self.samples = []
 
         with open(split_file, "r") as f:
-            for line in f:
-                parts = line.strip().split()
-                if len(parts) < 2:
-                    continue
+            lines = f.readlines()
 
-                image_name = parts[0]
-                class_id = int(parts[1]) - 1  # convert 1..37 to 0..36
+        # Oxford-IIIT Pet split files have 6 header lines
+        for line in lines[6:]:
+            parts = line.strip().split()
+            if len(parts) < 2:
+                continue
 
-                image_path = os.path.join(self.images_dir, image_name + ".jpg")
-                xml_path = os.path.join(self.xml_dir, image_name + ".xml")
-                mask_path = os.path.join(self.trimap_dir, image_name + ".png")
+            image_name = parts[0]
+            class_id = int(parts[1]) - 1  # convert 1..37 to 0..36
 
-                # Keep only fully valid samples
-                if os.path.exists(image_path) and os.path.exists(xml_path) and os.path.exists(mask_path):
-                    self.samples.append((image_name, class_id))
+            image_path = os.path.join(self.images_dir, image_name + ".jpg")
+            xml_path = os.path.join(self.xml_dir, image_name + ".xml")
+            mask_path = os.path.join(self.trimap_dir, image_name + ".png")
+
+            if os.path.exists(image_path) and os.path.exists(xml_path) and os.path.exists(mask_path):
+                self.samples.append((image_name, class_id))
 
         if len(self.samples) == 0:
             raise RuntimeError("No valid samples found. Check dataset paths.")
@@ -60,7 +62,7 @@ class OxfordIIITPetDataset(Dataset):
         return len(self.samples)
 
     def _load_bbox(self, xml_path, orig_w, orig_h):
-        """Load bbox from XML and convert to normalized [xc, yc, w, h]."""
+        """Load bbox from XML and convert to pixel-space [xc, yc, w, h]."""
         tree = ET.parse(xml_path)
         root = tree.getroot()
 
@@ -73,13 +75,13 @@ class OxfordIIITPetDataset(Dataset):
 
         x_center = (xmin + xmax) / 2.0
         y_center = (ymin + ymax) / 2.0
-        width = (xmax - xmin)
-        height = (ymax - ymin)
+        width = xmax - xmin
+        height = ymax - ymin
 
-        # scale to resized image (224x224)
+        # scale bbox to resized image size
         scale_x = self.image_size / orig_w
         scale_y = self.image_size / orig_h
-        
+
         x_center *= scale_x
         y_center *= scale_y
         width *= scale_x
