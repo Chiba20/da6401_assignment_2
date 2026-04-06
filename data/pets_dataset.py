@@ -104,16 +104,20 @@ class OxfordIIITPetDataset(Dataset):
         return torch.tensor(remapped, dtype=torch.long)
 
     def _load_image(self, image_path):
-        """Load image, resize, convert to tensor, normalize to [0,1]."""
+        """Load image, resize, convert to tensor, normalize with ImageNet stats."""
         image = Image.open(image_path).convert("RGB")
         orig_w, orig_h = image.size
-
+    
         image = image.resize((self.image_size, self.image_size), Image.BILINEAR)
         image = np.array(image, dtype=np.float32) / 255.0
         image = torch.from_numpy(image).permute(2, 0, 1)  # [H,W,C] -> [C,H,W]
-
+    
+        mean = torch.tensor([0.485, 0.456, 0.406], dtype=torch.float32).view(3, 1, 1)
+        std = torch.tensor([0.229, 0.224, 0.225], dtype=torch.float32).view(3, 1, 1)
+        image = (image - mean) / std
+    
         return image, orig_w, orig_h
-
+    
     def __getitem__(self, idx):
         image_name, label = self.samples[idx]
 
