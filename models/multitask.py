@@ -61,7 +61,7 @@ class MultiTaskPerceptionModel(nn.Module):
 
         if not os.path.exists(unet_path):
             gdown.download(
-                url="https://drive.google.com/file/d/1M-qy4231U_XXUbBpQvfKL2Y1FFvtL0eP/view?usp=sharing",
+                url="https://drive.google.com/file/d/1Y7d-tVXvvvLjCWCB_Czv8G-wdbgs3rTJ/view?usp=sharing",
                 output=unet_path,
                 quiet=False,
                 fuzzy=True,
