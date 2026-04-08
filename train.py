@@ -158,6 +158,28 @@ def validate_localization(model, loader, mse_loss, iou_loss, device):
     return total_loss / total
 
 
+def pixel_accuracy_from_logits(logits, masks):
+    preds = torch.argmax(logits, dim=1)
+    return (preds == masks).float().mean().item()
+
+
+def dice_score_from_logits(logits, masks, num_classes=3, eps=1e-6):
+    preds = torch.argmax(logits, dim=1)
+    dice_scores = []
+
+    for c in range(num_classes):
+        pred_c = (preds == c).float()
+        mask_c = (masks == c).float()
+
+        intersection = (pred_c * mask_c).sum()
+        union = pred_c.sum() + mask_c.sum()
+
+        dice = (2.0 * intersection + eps) / (union + eps)
+        dice_scores.append(dice.item())
+
+    return sum(dice_scores) / len(dice_scores)
+
+
 def train_one_epoch_segmentation(model, loader, optimizer, criterion, device):
     model.train()
     total_loss = 0.0
@@ -184,6 +206,9 @@ def validate_segmentation(model, loader, criterion, device):
     model.eval()
     total_loss = 0.0
     total = 0
+    total_pixel_acc = 0.0
+    total_dice = 0.0
+    num_batches = 0
 
     for images, _, _, masks in loader:
         images = images.to(device)
@@ -195,7 +220,15 @@ def validate_segmentation(model, loader, criterion, device):
         total_loss += loss.item() * images.size(0)
         total += images.size(0)
 
-    return total_loss / total
+        total_pixel_acc += pixel_accuracy_from_logits(logits, masks)
+        total_dice += dice_score_from_logits(logits, masks)
+        num_batches += 1
+
+    avg_loss = total_loss / total
+    avg_pixel_acc = total_pixel_acc / num_batches
+    avg_dice = total_dice / num_batches
+
+    return avg_loss, avg_pixel_acc, avg_dice
 
 
 def train_one_epoch_multitask(model, loader, optimizer, cls_loss_fn, mse_loss, iou_loss, seg_loss_fn, device):
@@ -271,6 +304,13 @@ def main():
     parser.add_argument("--seg_classes", type=int, default=3)
     parser.add_argument("--dropout_p", type=float, default=0.5)
     parser.add_argument("--save_dir", type=str, default="checkpoints")
+    parser.add_argument(
+        "--transfer_strategy",
+        type=str,
+        default="full",
+        choices=["strict", "partial", "full"],
+        help="Only used for segmentation task in Q2.3"
+    )
     args = parser.parse_args()
 
     os.makedirs(args.save_dir, exist_ok=True)
@@ -291,8 +331,13 @@ def main():
         dropout_p=args.dropout_p
     ).to(device)
 
+    # Apply transfer strategy only for segmentation
+    if args.task == "segmentation":
+        model.set_transfer_strategy(args.transfer_strategy)
+        print(f"Segmentation transfer strategy: {args.transfer_strategy}")
+
     optimizer = torch.optim.Adam(
-        model.parameters(),
+        filter(lambda p: p.requires_grad, model.parameters()),
         lr=args.lr,
         weight_decay=args.weight_decay
     )
@@ -304,7 +349,7 @@ def main():
 
     wandb.init(
         project="da6401-assignment2",
-        name=f"{args.task}-run",
+        name=f"{args.task}-{args.transfer_strategy}-run" if args.task == "segmentation" else f"{args.task}-run",
         config=vars(args)
     )
 
@@ -356,19 +401,24 @@ def main():
             train_loss = train_one_epoch_segmentation(
                 model, train_loader, optimizer, seg_loss_fn, device
             )
-            val_loss = validate_segmentation(
+            val_loss, val_pixel_acc, val_dice = validate_segmentation(
                 model, val_loader, seg_loss_fn, device
             )
 
             print(
                 f"Epoch [{epoch+1}/{args.epochs}] "
-                f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}"
+                f"Train Loss: {train_loss:.4f} | "
+                f"Val Loss: {val_loss:.4f} | "
+                f"Val Pixel Acc: {val_pixel_acc:.4f} | "
+                f"Val Dice: {val_dice:.4f}"
             )
 
             wandb.log({
                 "epoch": epoch + 1,
                 "train_loss": train_loss,
                 "val_loss": val_loss,
+                "val_pixel_acc": val_pixel_acc,
+                "val_dice": val_dice,
             })
 
         else:  # multitask
