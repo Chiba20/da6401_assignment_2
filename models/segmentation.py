@@ -68,6 +68,39 @@ class VGG11UNet(nn.Module):
 
         self.final_conv = nn.Conv2d(64 + 64, num_classes, kernel_size=1)
 
+    def set_transfer_strategy(self, strategy: str = "full"):
+        """
+        Set transfer learning strategy for encoder.
+
+        Args:
+            strategy:
+                - "strict": freeze entire encoder
+                - "partial": freeze early encoder blocks only
+                - "full": train entire model
+        """
+        # first make everything trainable
+        for p in self.parameters():
+            p.requires_grad = True
+
+        if strategy == "strict":
+            for p in self.encoder.parameters():
+                p.requires_grad = False
+
+        elif strategy == "partial":
+            # freeze early blocks only
+            # assumes VGG11Encoder has block1, block2, block3, block4, block5
+            for block_name in ["block1", "block2", "block3"]:
+                block = getattr(self.encoder, block_name, None)
+                if block is not None:
+                    for p in block.parameters():
+                        p.requires_grad = False
+
+        elif strategy == "full":
+            pass
+
+        else:
+            raise ValueError(f"Unknown transfer strategy: {strategy}")
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass for segmentation model.
 
