@@ -7,7 +7,7 @@
 ## Weights & Biases Report
 
 Public W&B Report Link:  
-https://api.wandb.ai/links/ge26z812-iitm-india/ftgsmccf
+https://wandb.ai/ge26z812-iitm-india/da6401-a3/reports/Assignment3--VmlldzoxNjkxMDY5OA?accessToken=4f66aa8h215uyrjz6t9hknnqhaihrcmok27xmkse8mw3y5i7ahcg1bja8g7eba9y
 All experiments, visualizations, and analysis required for the assignment are in this report.
 
 ## Repository Description
